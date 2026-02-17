@@ -1,0 +1,218 @@
+<Window x:Class="AoE4KeybindsOverlay.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:AoE4KeybindsOverlay.Views.Controls"
+        xmlns:converters="clr-namespace:AoE4KeybindsOverlay.Converters"
+        mc:Ignorable="d"
+        Title="AoE4 Keybinds Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Width="1200"
+        Height="450"
+        MinWidth="400"
+        MinHeight="200"
+        WindowStartupLocation="Manual"
+        Opacity="1.0">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Themes/DarkTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:FormFactorDisplayNameConverter x:Key="FormFactorDisplayNameConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Background layer with separate opacity control -->
+        <Border CornerRadius="4"
+                Opacity="{Binding Settings.BackgroundOpacity}">
+            <Border.Background>
+                <SolidColorBrush Color="#1A1A2E" />
+            </Border.Background>
+        </Border>
+
+        <!-- Content layer with its own opacity control -->
+        <Grid Opacity="{Binding Settings.ContentOpacity}">
+            <!-- Outer layout: toolbar row + content rows -->
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="ToolbarRow" Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Toolbar (only visible when unlocked) -->
+            <Border x:Name="MoveGrip"
+                    Grid.Row="0"
+                    CornerRadius="4,4,0,0"
+                    Background="#66333344"
+                    Cursor="SizeAll"
+                    Visibility="Visible"
+                    MouseLeftButtonDown="MoveGrip_MouseLeftButtonDown">
+                <DockPanel Margin="6,2">
+                    <!-- Right-side buttons -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="StatsButton" Content="Stats" Click="StatsButton_Click"
+                                FontSize="10" Padding="6,1" Margin="2,0"
+                                Background="#44666688" Foreground="#CCB0B0C0" BorderThickness="0" Cursor="Hand" />
+                        <Button x:Name="ToggleListButton" Content="List" Click="ToggleListButton_Click"
+                                FontSize="10" Padding="6,1" Margin="2,0"
+                                Background="#44666688" Foreground="#CCB0B0C0" BorderThickness="0" Cursor="Hand" />
+                        <Button x:Name="LockButton" Content="Lock" Click="LockButton_Click"
+                                FontSize="10" Padding="6,1" Margin="2,0"
+                                Background="#44666688" Foreground="#CCB0B0C0" BorderThickness="0" Cursor="Hand" />
+                        <Button x:Name="HideButton" Content="Hide" Click="HideButton_Click"
+                                FontSize="10" Padding="6,1" Margin="2,0"
+                                Background="#44666688" Foreground="#CCB0B0C0" BorderThickness="0" Cursor="Hand" />
+                        <Button x:Name="ExitButton" Content="Exit" Click="ExitButton_Click"
+                                FontSize="10" Padding="6,1" Margin="2,0"
+                                Background="#44884444" Foreground="#CCCCAAAA" BorderThickness="0" Cursor="Hand" />
+                    </StackPanel>
+                    <!-- Left side: profile selector + settings sliders -->
+                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                            <TextBlock Text="Profile:" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <ComboBox x:Name="ProfileComboBox"
+                                      Width="120" Height="18"
+                                      FontSize="9"
+                                      VerticalAlignment="Center"
+                                      ItemsSource="{Binding Settings.AvailableProfiles}"
+                                      SelectedItem="{Binding Settings.SelectedProfile}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                            <TextBlock Text="Layout:" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <ComboBox x:Name="LayoutComboBox"
+                                      Width="60" Height="18"
+                                      FontSize="9"
+                                      VerticalAlignment="Center"
+                                      ItemsSource="{Binding Settings.AvailableFormFactors}"
+                                      SelectedItem="{Binding Settings.KeyboardFormFactor}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource FormFactorDisplayNameConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="BG" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,2,0" />
+                            <Slider Width="50" Minimum="0.0" Maximum="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.BackgroundOpacity}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="Content" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,2,0" />
+                            <Slider Width="50" Minimum="0.1" Maximum="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.ContentOpacity}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="Key" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,2,0" />
+                            <Slider Width="40" Minimum="6" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.KeyFontSize}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="List" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,2,0" />
+                            <Slider Width="40" Minimum="8" Maximum="28" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.BindingListFontSize}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="Legend" Foreground="#88B0B0C0" FontSize="9" VerticalAlignment="Center" Margin="0,0,2,0" />
+                            <Slider Width="40" Minimum="6" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.LegendFontSize}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </WrapPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Category Legend -->
+            <controls:CategoryLegend Grid.Row="1"
+                                      Margin="4,0,4,0"
+                                      HorizontalAlignment="Center"
+                                      FontSize="{Binding Settings.LegendFontSize}"
+                                      LegendItems="{Binding CategoryLegendItems}" />
+
+            <!-- Keyboard and Mouse side by side -->
+            <Grid Grid.Row="2" Margin="4,0,4,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <controls:KeyboardControl Grid.Column="0"
+                                           VerticalAlignment="Top"
+                                           HorizontalAlignment="Stretch"
+                                           KeyViewModels="{Binding Keyboard.Keys}"
+                                           CanvasWidth="{Binding Keyboard.CanvasWidth}"
+                                           CanvasHeight="{Binding Keyboard.CanvasHeight}"
+                                           KeyFontSize="{Binding Settings.KeyFontSize}" />
+
+                <controls:MouseControl Grid.Column="2"
+                                        VerticalAlignment="Top"
+                                        HorizontalAlignment="Center"
+                                        ButtonViewModels="{Binding Mouse.Buttons}"
+                                        KeyFontSize="{Binding Settings.KeyFontSize}" />
+            </Grid>
+
+            <!-- Binding list below keyboard - fills remaining space (visible in Live mode) -->
+            <controls:BindingListControl Grid.Row="3"
+                                          Margin="4,0,4,2"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch"
+                                          FontSize="{Binding Settings.BindingListFontSize}"
+                                          BindingItems="{Binding ActiveBindings.VisibleBindings}">
+                <controls:BindingListControl.Style>
+                    <Style TargetType="controls:BindingListControl">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsLiveMode}" Value="True" />
+                                    <Condition Binding="{Binding Settings.ShowBindingList}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </controls:BindingListControl.Style>
+            </controls:BindingListControl>
+
+            <!-- Stats panel (visible in Statistics mode) -->
+            <controls:StatsPanelControl Grid.Row="3"
+                                         Margin="4,0,4,2"
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Stretch"
+                                         Visibility="{Binding IsStatisticsMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                         Statistics="{Binding Statistics}" />
+        </Grid>
+
+        <!-- Resize grip at bottom-right (only visible when unlocked) -->
+        <Thumb x:Name="ResizeGrip"
+               Width="16"
+               Height="16"
+               HorizontalAlignment="Right"
+               VerticalAlignment="Bottom"
+               Cursor="SizeNWSE"
+               Visibility="Collapsed"
+               Panel.ZIndex="100"
+               DragDelta="ResizeGrip_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Canvas Width="16" Height="16">
+                        <Line X1="4" Y1="14" X2="14" Y2="4" Stroke="#88AAAAAA" StrokeThickness="1.5" />
+                        <Line X1="8" Y1="14" X2="14" Y2="8" Stroke="#88AAAAAA" StrokeThickness="1.5" />
+                        <Line X1="12" Y1="14" X2="14" Y2="12" Stroke="#88AAAAAA" StrokeThickness="1.5" />
+                    </Canvas>
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+    </Grid>
+
+</Window>

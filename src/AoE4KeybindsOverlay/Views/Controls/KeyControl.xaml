@@ -1,0 +1,101 @@
+<UserControl x:Class="AoE4KeybindsOverlay.Views.Controls.KeyControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:AoE4KeybindsOverlay.Views.Controls"
+             xmlns:converters="clr-namespace:AoE4KeybindsOverlay.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="50" d:DesignHeight="50">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:HeatValueToBrushConverter x:Key="HeatValueToBrushConverter" />
+    </UserControl.Resources>
+
+    <Border x:Name="KeyBorder"
+            CornerRadius="3"
+            BorderThickness="1"
+            BorderBrush="#2A2A4A"
+            Width="{Binding KeyWidth, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+            Height="{Binding KeyHeight, RelativeSource={RelativeSource AncestorType=local:KeyControl}}">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Opacity" Value="1.0" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsDimmed, RelativeSource={RelativeSource AncestorType=local:KeyControl}}" Value="True">
+                        <Setter Property="Opacity" Value="0.2" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <Border.Background>
+            <SolidColorBrush Color="#FF1A1A2E" />
+        </Border.Background>
+
+        <Grid>
+            <!-- Highlight overlay for category color tinting -->
+            <Border x:Name="HighlightOverlay"
+                    CornerRadius="3"
+                    Opacity="0.3"
+                    Background="{Binding HighlightBrush, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+                    Visibility="{Binding HasHighlight, RelativeSource={RelativeSource AncestorType=local:KeyControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <!-- Heatmap overlay -->
+            <Border x:Name="HeatmapOverlay"
+                    CornerRadius="3"
+                    Opacity="0.6"
+                    Background="{Binding HeatmapIntensity, RelativeSource={RelativeSource AncestorType=local:KeyControl}, Converter={StaticResource HeatValueToBrushConverter}}"
+                    Visibility="{Binding IsHeatmapMode, RelativeSource={RelativeSource AncestorType=local:KeyControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <!-- Pressed glow effect -->
+            <Border x:Name="PressedOverlay"
+                    CornerRadius="3"
+                    Visibility="{Binding IsPressed, RelativeSource={RelativeSource AncestorType=local:KeyControl}, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border.Background>
+                    <SolidColorBrush Color="#BBDAA520" />
+                </Border.Background>
+            </Border>
+
+            <!-- Key content: fixed two-row grid so key labels stay aligned
+                 regardless of binding text length -->
+            <Grid Margin="2" ClipToBounds="True">
+                <Grid.RowDefinitions>
+                    <!-- Key label: fixed size at top -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Binding text: fills remaining space, clipped -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Main key label -->
+                <TextBlock x:Name="KeyLabelText"
+                           Grid.Row="0"
+                           Text="{Binding KeyLabel, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+                           Foreground="White"
+                           FontFamily="Segoe UI"
+                           FontSize="{Binding KeyFontSize, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           TextTrimming="CharacterEllipsis" />
+
+                <!-- Binding label (shown below the key label, clipped to remaining space) -->
+                <TextBlock x:Name="BindingLabel"
+                           Grid.Row="1"
+                           Text="{Binding BindingText, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+                           ToolTip="{Binding BindingText, RelativeSource={RelativeSource AncestorType=local:KeyControl}}"
+                           Foreground="#B0B0C0"
+                           FontFamily="Segoe UI"
+                           FontSize="7"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis"
+                           Opacity="0.8"
+                           Visibility="{Binding HasBindingText, RelativeSource={RelativeSource AncestorType=local:KeyControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
+        </Grid>
+    </Border>
+
+</UserControl>

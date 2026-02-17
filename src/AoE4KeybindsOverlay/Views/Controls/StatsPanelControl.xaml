@@ -1,0 +1,243 @@
+<UserControl x:Class="AoE4KeybindsOverlay.Views.Controls.StatsPanelControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:AoE4KeybindsOverlay.Views.Controls"
+             xmlns:converters="clr-namespace:AoE4KeybindsOverlay.Converters"
+             mc:Ignorable="d"
+             x:Name="StatsRoot"
+             d:DesignWidth="1100" d:DesignHeight="300">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:CategoryToBrushConverter x:Key="CategoryToBrushConverter" />
+
+        <!-- Section header style -->
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CCDDDDFF" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,6,0,4" />
+        </Style>
+
+        <!-- Stat label style -->
+        <Style x:Key="StatLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#99B0B0C0" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Stat value style -->
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0,12,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#CC1A1A2E"
+            CornerRadius="5"
+            Padding="6">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel DataContext="{Binding Statistics, ElementName=StatsRoot}">
+
+                <!-- ═══ SESSION SUMMARY ═══ -->
+                <TextBlock Text="SESSION SUMMARY" Style="{StaticResource SectionHeader}" />
+                <Border Background="#22FFFFFF" CornerRadius="3" Padding="8,4" Margin="0,0,0,4">
+                    <WrapPanel Orientation="Horizontal">
+                        <TextBlock Text="Duration:" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding CurrentSession.Duration, StringFormat='{}{0:hh\\:mm\\:ss}', FallbackValue='--:--:--'}"
+                                   Style="{StaticResource StatValue}" />
+                        <TextBlock Text="Keys:" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding CurrentSession.TotalKeyPresses, FallbackValue=0}"
+                                   Style="{StaticResource StatValue}" />
+                        <TextBlock Text="Matched:" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding CurrentSession.MatchedPresses, FallbackValue=0}"
+                                   Style="{StaticResource StatValue}" />
+                        <TextBlock Text="Unmatched:" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding CurrentSession.UnmatchedPresses, FallbackValue=0}"
+                                   Style="{StaticResource StatValue}" />
+                    </WrapPanel>
+                </Border>
+
+                <!-- ═══ CURRENT MATCH (only visible when in a match) ═══ -->
+                <StackPanel Visibility="{Binding CurrentMatch, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                    <TextBlock Text="CURRENT MATCH" Style="{StaticResource SectionHeader}" Foreground="#CC88DDAA" />
+                    <Border Background="#1844AA66" CornerRadius="3" Padding="8,4" Margin="0,0,0,4"
+                            BorderBrush="#3388DDAA" BorderThickness="1">
+                        <WrapPanel Orientation="Horizontal">
+                            <TextBlock Text="Duration:" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding CurrentMatch.Duration, StringFormat='{}{0:hh\\:mm\\:ss}', FallbackValue='--:--:--'}"
+                                       Style="{StaticResource StatValue}" />
+                            <TextBlock Text="Keys:" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding CurrentMatch.TotalKeyPresses, FallbackValue=0}"
+                                       Style="{StaticResource StatValue}" />
+                            <TextBlock Text="Matched:" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding CurrentMatch.MatchedPresses, FallbackValue=0}"
+                                       Style="{StaticResource StatValue}" />
+                            <TextBlock Text="Unmatched:" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding CurrentMatch.UnmatchedPresses, FallbackValue=0}"
+                                       Style="{StaticResource StatValue}" />
+                        </WrapPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ═══ MATCH HISTORY ═══ -->
+                <TextBlock Text="MATCH HISTORY" Style="{StaticResource SectionHeader}" />
+                <Border Background="#22FFFFFF" CornerRadius="3" Padding="4,2" Margin="0,0,0,4">
+                    <StackPanel>
+                        <!-- Table header -->
+                        <Grid Margin="4,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Date" Foreground="#88B0B0C0" FontSize="9" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" Text="Duration" Foreground="#88B0B0C0" FontSize="9" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="2" Text="Keys" Foreground="#88B0B0C0" FontSize="9" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="3" Text="Matched" Foreground="#88B0B0C0" FontSize="9" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="4" Text="Unmatched" Foreground="#88B0B0C0" FontSize="9" FontWeight="SemiBold" />
+                        </Grid>
+
+                        <!-- Match rows -->
+                        <ItemsControl ItemsSource="{Binding MatchHistory}" MaxHeight="120">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding MatchStart, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                                   Foreground="#CCB0B0C0" FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Duration, StringFormat='{}{0:hh\\:mm\\:ss}'}"
+                                                   Foreground="White" FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding TotalKeyPresses}"
+                                                   Foreground="White" FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="3" Text="{Binding MatchedPresses}"
+                                                   Foreground="#CCAADDAA" FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="4" Text="{Binding UnmatchedPresses}"
+                                                   Foreground="#CCDDAAAA" FontSize="9" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty state -->
+                        <TextBlock Text="No matches recorded yet"
+                                   Foreground="#66B0B0C0" FontSize="9" FontStyle="Italic"
+                                   Margin="4,2" HorizontalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding MatchHistory.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- ═══ COMMAND USAGE - Three columns side by side ═══ -->
+                <Grid Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Most Used -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="MOST USED" Style="{StaticResource SectionHeader}" />
+                        <Border Background="#22FFFFFF" CornerRadius="3" Padding="4,2">
+                            <ItemsControl ItemsSource="{Binding MostUsed}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="2,1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding CommandId}"
+                                                       Foreground="#CCB0B0C0" FontSize="9"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding TotalPresses}"
+                                                       Foreground="#CCAADDAA" FontSize="9" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center" Margin="6,0,0,0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Least Used -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="LEAST USED" Style="{StaticResource SectionHeader}" />
+                        <Border Background="#22FFFFFF" CornerRadius="3" Padding="4,2">
+                            <ItemsControl ItemsSource="{Binding LeastUsed}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="2,1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding CommandId}"
+                                                       Foreground="#CCB0B0C0" FontSize="9"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding TotalPresses}"
+                                                       Foreground="#CCDDAAAA" FontSize="9" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center" Margin="6,0,0,0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Never Used -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="NEVER USED" Style="{StaticResource SectionHeader}" />
+                        <Border Background="#22FFFFFF" CornerRadius="3" Padding="4,2" MaxHeight="200">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding NeverUsed}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                       Foreground="#88B0B0C0" FontSize="9"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Margin="2,1" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

@@ -1,0 +1,51 @@
+<UserControl x:Class="AoE4KeybindsOverlay.Views.Controls.KeyboardControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:AoE4KeybindsOverlay.Views.Controls"
+             mc:Ignorable="d"
+             d:DesignWidth="800" d:DesignHeight="250">
+
+    <!-- The keyboard is rendered as a Viewbox containing a Canvas.
+         Each key is a KeyControl positioned absolutely on the canvas.
+         The Viewbox ensures the keyboard scales uniformly to fit the container.
+         Scale factor: 50 pixels per logical key unit. -->
+
+    <Viewbox Stretch="Uniform">
+        <ItemsControl x:Name="KeysItemsControl"
+                      ItemsSource="{Binding KeyViewModels, RelativeSource={RelativeSource AncestorType=local:KeyboardControl}}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Width="{Binding CanvasWidth, RelativeSource={RelativeSource AncestorType=local:KeyboardControl}}"
+                            Height="{Binding CanvasHeight, RelativeSource={RelativeSource AncestorType=local:KeyboardControl}}" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding CanvasX}" />
+                    <Setter Property="Canvas.Top" Value="{Binding CanvasY}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <local:KeyControl KeyId="{Binding KeyId}"
+                                      KeyLabel="{Binding Label}"
+                                      KeyWidth="{Binding PixelWidth}"
+                                      KeyHeight="{Binding PixelHeight}"
+                                      IsPressed="{Binding IsPressed}"
+                                      HighlightBrush="{Binding HighlightBrush}"
+                                      HasHighlight="{Binding HasHighlight}"
+                                      HeatmapIntensity="{Binding HeatmapIntensity}"
+                                      IsHeatmapMode="{Binding IsHeatmapMode}"
+                                      BindingText="{Binding BindingText}"
+                                      IsDimmed="{Binding IsDimmed}"
+                                      KeyFontSize="{Binding KeyFontSize, RelativeSource={RelativeSource AncestorType=local:KeyboardControl}}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Viewbox>
+
+</UserControl>

@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+publish/
+
+# IDE / Editor
+.vs/
+*.user
+*.suo
+*.csproj.user
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Scratch / generated files
+nul
+unique_combos.txt
