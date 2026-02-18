@@ -32,6 +32,7 @@ public sealed class GlobalInputHookService : IInputHookService
     private const int WM_SYSKEYUP = 0x0105;
 
     // Mouse messages
+    private const int WM_MOUSEMOVE = 0x0200;
     private const int WM_LBUTTONDOWN = 0x0201;
     private const int WM_LBUTTONUP = 0x0202;
     private const int WM_RBUTTONDOWN = 0x0204;
@@ -41,6 +42,7 @@ public sealed class GlobalInputHookService : IInputHookService
     private const int WM_MOUSEWHEEL = 0x020A;
     private const int WM_XBUTTONDOWN = 0x020B;
     private const int WM_XBUTTONUP = 0x020C;
+    private const int WM_NCMOUSEMOVE = 0x00A0;
 
     // Virtual key codes for modifier keys
     private const int VK_LCONTROL = 0xA2;
@@ -293,12 +295,20 @@ public sealed class GlobalInputHookService : IInputHookService
 
     /// <summary>
     /// Low-level mouse hook callback. Must return quickly.
+    /// Bails out immediately for mouse move events to avoid overhead during gameplay.
     /// </summary>
     private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= 0)
         {
             var message = wParam.ToInt32();
+
+            // Fast reject: skip mouse moves immediately — no marshalling, no processing.
+            // In a game, mouse moves fire hundreds of times per second; processing them
+            // causes unnecessary context switches and measurable input lag.
+            if (message == WM_MOUSEMOVE || message == WM_NCMOUSEMOVE)
+                return CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
+
             var hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
 
             var (relicName, isDown) = ResolveMouseEvent(message, hookStruct.mouseData);
