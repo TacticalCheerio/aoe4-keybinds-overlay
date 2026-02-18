@@ -275,6 +275,39 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Refreshes the overlay display after the active profile has been reloaded externally
+    /// (e.g. when the .rkp file is modified on disk by the game).
+    /// </summary>
+    public void RefreshBindings()
+    {
+        if (_keybindingService.ActiveProfile is not null)
+        {
+            ActiveProfileName = _keybindingService.ActiveProfile.Name;
+        }
+
+        // Refresh the display based on current state
+        if (CurrentMode == OverlayMode.Live)
+        {
+            var modifiers = _inputHookService.CurrentModifiers;
+            if (modifiers == ModifierKeys.None || DisplayState == OverlayDisplayState.Idle)
+            {
+                ShowIdleBindings();
+            }
+            else
+            {
+                var possibleBindings = _keybindingService.GetPossibleBindings(modifiers);
+                ActiveBindings.UpdateForModifiers(modifiers, possibleBindings);
+                Keyboard.HighlightPossibleKeys(possibleBindings);
+                Mouse.HighlightPossibleButtons(possibleBindings);
+            }
+        }
+        else if (CurrentMode == OverlayMode.Statistics)
+        {
+            RefreshStatistics();
+        }
+    }
+
     private void OnKeyboardFormFactorChanged(object? sender, KeyboardFormFactor formFactor)
     {
         if (_layoutJsonPath is null) return;

@@ -27,6 +27,7 @@ public partial class App : Application
     private IHost? _host;
     private TaskbarIcon? _trayIcon;
     private OverlayWindow? _overlay;
+    private FileSystemWatcher? _profileWatcher;
 
     private static readonly string Aoe4DocumentsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -197,6 +198,13 @@ public partial class App : Application
 
             // System tray icon
             SetupTrayIcon();
+
+            // Watch .rkp files for changes so the overlay auto-updates
+            // when the user saves keybind settings in-game.
+            if (Directory.Exists(DefaultProfilesPath))
+            {
+                SetupProfileFileWatcher(DefaultProfilesPath);
+            }
         }
         catch (Exception ex)
         {
@@ -262,8 +270,87 @@ public partial class App : Application
         };
     }
 
+    /// <summary>
+    /// Watches the profiles directory for .rkp file modifications.
+    /// When the currently active profile's file is written, reloads it and refreshes the overlay.
+    /// Uses a debounce timer to avoid reloading multiple times when the game writes in bursts.
+    /// </summary>
+    private void SetupProfileFileWatcher(string profilesDirectory)
+    {
+        _profileWatcher = new FileSystemWatcher(profilesDirectory, "*.rkp")
+        {
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+            EnableRaisingEvents = true
+        };
+
+        // Debounce: AoE4 may write the file in multiple flushes.
+        // Wait 500ms after the last change before reloading.
+        System.Threading.Timer? debounceTimer = null;
+        string? pendingFile = null;
+        var debounceSync = new object();
+
+        _profileWatcher.Changed += (_, args) =>
+        {
+            lock (debounceSync)
+            {
+                pendingFile = args.FullPath;
+
+                debounceTimer?.Dispose();
+                debounceTimer = new System.Threading.Timer(_ =>
+                {
+                    string? fileToReload;
+                    lock (debounceSync)
+                    {
+                        fileToReload = pendingFile;
+                        pendingFile = null;
+                    }
+
+                    if (fileToReload is not null)
+                    {
+                        Current.Dispatcher.BeginInvoke(() => ReloadProfileFromDisk(fileToReload));
+                    }
+                }, null, 500, Timeout.Infinite);
+            }
+        };
+    }
+
+    /// <summary>
+    /// Reloads the specified .rkp profile file and refreshes the overlay UI.
+    /// Only reloads if the changed file matches the currently active profile.
+    /// </summary>
+    private void ReloadProfileFromDisk(string filePath)
+    {
+        if (_host is null) return;
+
+        try
+        {
+            var keybindings = _host.Services.GetRequiredService<IKeybindingService>();
+            var stats = _host.Services.GetRequiredService<IStatisticsService>();
+            var mainVm = _host.Services.GetRequiredService<MainViewModel>();
+
+            // Only reload if the changed file is the currently active profile
+            var activeProfile = keybindings.ActiveProfile;
+            if (activeProfile is null) return;
+
+            var activeFileName = Path.GetFileNameWithoutExtension(filePath);
+            if (!string.Equals(activeFileName, activeProfile.Name, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            if (!File.Exists(filePath)) return;
+
+            keybindings.LoadProfile(filePath);
+            stats.SetBindings(keybindings.GetAllBindings());
+            mainVm.RefreshBindings();
+        }
+        catch
+        {
+            // File may still be locked by AoE4 — silently ignore and let the next write retry.
+        }
+    }
+
     protected override async void OnExit(ExitEventArgs e)
     {
+        _profileWatcher?.Dispose();
         _trayIcon?.Dispose();
 
         if (_host is not null)

@@ -256,7 +256,12 @@ public sealed class GlobalInputHookService : IInputHookService
                         if (relicName is not null)
                         {
                             var modifiers = CurrentModifiers;
-                            _dispatcher.BeginInvoke(() =>
+                            // Use Send priority for modifier keys so combo highlights
+                            // appear instantly without waiting behind queued render work.
+                            var priority = IsModifierVk(vkCode)
+                                ? DispatcherPriority.Send
+                                : DispatcherPriority.Input;
+                            _dispatcher.BeginInvoke(priority, () =>
                             {
                                 KeyDown?.Invoke(this, new KeyboardHookEventArgs
                                 {
@@ -276,7 +281,10 @@ public sealed class GlobalInputHookService : IInputHookService
                     if (relicName is not null)
                     {
                         var modifiers = CurrentModifiers;
-                        _dispatcher.BeginInvoke(() =>
+                        var priority = IsModifierVk(vkCode)
+                            ? DispatcherPriority.Send
+                            : DispatcherPriority.Input;
+                        _dispatcher.BeginInvoke(priority, () =>
                         {
                             KeyUp?.Invoke(this, new KeyboardHookEventArgs
                             {
@@ -420,6 +428,14 @@ public sealed class GlobalInputHookService : IInputHookService
             _ => (null, false)
         };
     }
+
+    /// <summary>
+    /// Returns true if the virtual key code is a modifier (Ctrl, Shift, Alt).
+    /// </summary>
+    private static bool IsModifierVk(int vkCode) =>
+        vkCode is VK_LCONTROL or VK_RCONTROL
+              or VK_LSHIFT or VK_RSHIFT
+              or VK_LMENU or VK_RMENU;
 
     /// <summary>
     /// Updates the tracked modifier state based on key events for Ctrl, Shift, and Alt.
