@@ -275,11 +275,16 @@ public partial class App : Application
     /// When the currently active profile's file is written, reloads it and refreshes the overlay.
     /// Uses a debounce timer to avoid reloading multiple times when the game writes in bursts.
     /// </summary>
+    /// <remarks>
+    /// AoE4 may save profiles using different strategies (in-place write, delete+recreate,
+    /// or rename+replace), so we watch for Changed, Created, and Renamed events.
+    /// </remarks>
     private void SetupProfileFileWatcher(string profilesDirectory)
     {
         _profileWatcher = new FileSystemWatcher(profilesDirectory, "*.rkp")
         {
-            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
+                         | NotifyFilters.FileName | NotifyFilters.CreationTime,
             EnableRaisingEvents = true
         };
 
@@ -289,11 +294,11 @@ public partial class App : Application
         string? pendingFile = null;
         var debounceSync = new object();
 
-        _profileWatcher.Changed += (_, args) =>
+        void OnFileEvent(string fullPath)
         {
             lock (debounceSync)
             {
-                pendingFile = args.FullPath;
+                pendingFile = fullPath;
 
                 debounceTimer?.Dispose();
                 debounceTimer = new System.Threading.Timer(_ =>
@@ -311,7 +316,12 @@ public partial class App : Application
                     }
                 }, null, 500, Timeout.Infinite);
             }
-        };
+        }
+
+        // Cover all save strategies: in-place write, delete+recreate, rename+replace
+        _profileWatcher.Changed += (_, args) => OnFileEvent(args.FullPath);
+        _profileWatcher.Created += (_, args) => OnFileEvent(args.FullPath);
+        _profileWatcher.Renamed += (_, args) => OnFileEvent(args.FullPath);
     }
 
     /// <summary>
@@ -328,12 +338,16 @@ public partial class App : Application
             var stats = _host.Services.GetRequiredService<IStatisticsService>();
             var mainVm = _host.Services.GetRequiredService<MainViewModel>();
 
-            // Only reload if the changed file is the currently active profile
+            // Only reload if the changed file is the currently active profile.
+            // Compare by file path (from the profile) and also by filename vs profile name,
+            // since AoE4 may delete+recreate (new path identity) or write in-place.
             var activeProfile = keybindings.ActiveProfile;
             if (activeProfile is null) return;
 
-            var activeFileName = Path.GetFileNameWithoutExtension(filePath);
-            if (!string.Equals(activeFileName, activeProfile.Name, StringComparison.OrdinalIgnoreCase))
+            var changedFileName = Path.GetFileNameWithoutExtension(filePath);
+            var activeFileName = Path.GetFileNameWithoutExtension(activeProfile.FilePath);
+
+            if (!string.Equals(changedFileName, activeFileName, StringComparison.OrdinalIgnoreCase))
                 return;
 
             if (!File.Exists(filePath)) return;
